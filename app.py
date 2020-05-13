@@ -1,3 +1,9 @@
+from __future__ import print_function
+import pickle
+import os.path
+from googleapiclient.discovery import build
+from google_auth_oauthlib.flow import InstalledAppFlow
+from google.auth.transport.requests import Request
 import dash
 import dash_auth 
 import dash_core_components as dcc 
@@ -10,16 +16,54 @@ import numpy as np
 from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 from datetime import datetime
+from get_spredsheet import get_google_sheet, gsheet2df
 
+SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-df_ent = pd.read_excel('data/entregas.xlsx')
-df = pd.read_excel('data/me2n_consolidado.xlsx')
-tasa_serv = pd.read_excel('data/tasa_servicio.xlsx')
-df_tasa = pd.read_excel('data/tasa_cambio.xlsx',index_col=0)
-clases_doc = pd.read_excel('data/Clases documentos.xlsx', index_col=0)
-grupos_articulos = pd.read_excel('data/grupos_articulos.xlsx',index_col=0)
-tipo_proveedor = pd.read_excel('data/correos_proveedores.xlsx', index_col=0)
-tipo_proveedor.index=tipo_proveedor.index.astype(str, copy = False)
+id_me2n = '1HUxbZV0dYAytXzG9zUFmpLkfLliSTK18QLiVCHU3zEY'
+range_me2n = 'Sheet1'
+id_entregas = '1qArjrPF4eifdYpHKB7eiq0-9o4VLDlQUimuEsj75Yz0'
+range_entregas = 'entregas'
+id_correos = '1Vw7KVh0UmaGWyuqkWpI5z5Ij9E_Z6uoKkgVoAlAn2Ic'
+range_correos = 'correos'
+id_tasa_cambio = '1QzJsSH9pY5SIKbmAiUwaLLWC8cz6EBMO7sOXAvYqHOY'
+range_tasa_cambio = 'Hoja1'
+id_clase_doc = '1GewcBjxUi_H6tngR-sBscyh8QM7vQDZsWne2CA4LRFo'
+range_clase_doc = 'Hoja1'
+id_tasa_serv = '1faeXHDD6omq9YmbBW1f2clF5r9PVNdcFSGAQjttzE2s'
+range_tasa_serv = 'Hoja1'
+id_grup_art = '18iXurXuZSPEwIzkCDCnb9W3f4SUpcFVgpCIPmX5koxs'
+range_grup_art ='Hoja1'
+
+me2nValues = get_google_sheet(id_me2n, range_me2n)
+entregasValues = get_google_sheet(id_entregas, range_entregas)
+correosValues = get_google_sheet(id_correos, range_correos)
+cambioValues = get_google_sheet(id_tasa_cambio, range_tasa_cambio)
+claseDocValues = get_google_sheet(id_clase_doc, range_clase_doc)
+tasaServValues = get_google_sheet(id_tasa_serv, range_tasa_serv)
+grupArtValues = get_google_sheet(id_grup_art, range_grup_art)
+
+df = gsheet2df(me2nValues)
+df['Precio neto'] = pd.to_numeric(df['Precio neto'], errors='raise')
+df['Valor neto de pedido'] = pd.to_numeric(df['Valor neto de pedido'], errors='raise')
+df['Fecha documento'] = pd.to_datetime(df['Fecha documento'], errors='raise')
+df_ent = gsheet2df(entregasValues)
+df_ent['Precio Unitario'] = pd.to_numeric(df_ent['Precio Unitario'], errors='raise')
+df_ent['Subtotal'] = pd.to_numeric(df_ent['Subtotal'], errors='raise')
+df_ent['Fecha Contabilidad MIGO'] = pd.to_datetime(df_ent['Fecha Contabilidad MIGO'], errors='raise')
+df_tasa = gsheet2df(cambioValues)
+df_tasa.set_index("divisa", inplace = True)
+df_tasa['cambio'] = pd.to_numeric(df_tasa['cambio'], errors='raise')
+tipo_proveedor = gsheet2df(correosValues)
+tipo_proveedor.set_index("CODIGO SAP", inplace = True)
+tasa_serv = gsheet2df(tasaServValues)
+tasa_serv['entregas_a_tiempo'] = pd.to_numeric(tasa_serv['entregas_a_tiempo'], errors='raise')
+tasa_serv['entregas_totales'] = pd.to_numeric(tasa_serv['entregas_totales'], errors='raise')
+tasa_serv['tasa_servicio'] = tasa_serv['entregas_a_tiempo'] / tasa_serv['entregas_totales']
+clases_doc = gsheet2df(claseDocValues)
+clases_doc.set_index("Clase doc", inplace = True)
+grupos_articulos = gsheet2df(grupArtValues)
+grupos_articulos.set_index("Grupo de artículos", inplace = True)
 
 # Filter Compras
 df = df[df['Indicador de borrado'] != 'L']
