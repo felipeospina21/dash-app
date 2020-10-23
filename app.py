@@ -17,8 +17,10 @@ from dash.dependencies import Input, Output
 from plotly.subplots import make_subplots
 from datetime import datetime
 from get_spredsheet import get_google_sheet, gsheet2df
+from credentials import Credentials
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
+MAPBOX_API_TOKEN = Credentials.MAPBOX_API_TOKEN
 
 id_me2n = '1HUxbZV0dYAytXzG9zUFmpLkfLliSTK18QLiVCHU3zEY'
 range_me2n = 'Sheet1'

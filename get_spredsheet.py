@@ -51,7 +51,8 @@ def gsheet2df(result):
 
     return df
     
-
+if __name__ == '__main__':
+    pass
 # def mock(result):
 #     header = result.get('values', [])[0]   # Assumes first line is header!
 #     values = result.get('values', [])[1:]  # Everything else is data.
